@@ -67,6 +67,8 @@ startDelim :: Stream s m Char => ParsecT s u m Char
 startDelim = P.satisfy (\c -> c == '\'' || c == '`')
 
 endDelim :: Stream s m Char => ParsecT s u m Char
+-- In some edge cases, notFollowedBy may result in the wrong results here:
+-- E.g. '<$>'' or '`infix`''.
 endDelim = P.char '`' <|> (singleQuote <* P.notFollowedBy singleQuote)
   where singleQuote = P.char '\''
 
