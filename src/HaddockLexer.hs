@@ -2,11 +2,9 @@
 module HaddockLexer where
 
 import Control.Applicative
-import Data.Functor.Identity
 import Data.Char
-import Text.Parsec (Stream, ParsecT, Parsec)
+import Text.Parsec (Stream, ParsecT)
 import qualified Text.Parsec as P
-import qualified Text.Parsec.Char as P
 
 import FastString (mkFastString)
 import Lexer (mkPStatePure, unP, ParseResult(POk), ParserFlags(..))
@@ -42,11 +40,7 @@ lex s = HsDoc s []
 
 -- Ignores infix identifiers for now
 delimitedPlausibleIdentifier :: Stream s m Char => ParsecT s u m String
-delimitedPlausibleIdentifier = do
-  identDelim
-  s <- plausibleIdentifier
-  identDelim
-  return s
+delimitedPlausibleIdentifier = identDelim *> plausibleIdentifier <* identDelim
 
 plausibleIdentifier :: Stream s m Char => ParsecT s u m String
 plausibleIdentifier = do
@@ -62,6 +56,15 @@ plausibleIdentifier = do
         '\'' -> P.try ((\x -> vs ++ "'" ++ x) <$> (P.char '\'' *> p)) <|> return vs
         _ -> fail "outofvalid"
 
+identDelim :: Stream s m Char => ParsecT s u m Char
+identDelim = P.satisfy (\c -> c == '\'' || c == '`')
+
+isFirstIdentChar :: Char -> Bool
+isFirstIdentChar c = isAlpha c || c == '_' || isSymbol c
+
+isIdentChar :: Char -> Bool
+isIdentChar c = not (isSpace c) && c /= '`'
+
 -- adapted from haddock-api
 parseIdent :: String -> Maybe RdrName
 parseIdent str0 =
@@ -72,26 +75,6 @@ parseIdent str0 =
   in case unP parseIdentifier pstate of
     POk _ name -> Just (unLoc name)
     _ -> Nothing
-
-isIdentChar :: Char -> Bool
-isIdentChar c = not (isSpace c) && c /= '`'
-
-isFirstIdentChar :: Char -> Bool
-isFirstIdentChar c = isAlpha c || c == '_' || isSymbol c
-
-identDelim :: Stream s m Char => ParsecT s u m Char
-identDelim = P.satisfy (\c -> c == '\'' || c == '`')
-
-startDelim :: Stream s m Char => ParsecT s u m Char
-startDelim = identDelim
-
-{-
-endDelim :: Stream s m Char => ParsecT s u m Char
--- In some edge cases, notFollowedBy may result in the wrong results here:
--- E.g. '<$>'' or '`infix`''.
-endDelim = P.char '`' <|> (singleQuote <* P.notFollowedBy singleQuote)
-  where singleQuote = P.char '\''
--}
 
 {-
 validIdentifier :: Stream s m Char => ParsecT s u m RdrName

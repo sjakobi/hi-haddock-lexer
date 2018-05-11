@@ -10,7 +10,6 @@ maintainer:          example@example.com
 copyright:           2018 Author name here
 category:            Web
 build-type:          Simple
-extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
@@ -26,6 +25,7 @@ test-suite test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:       HaddockLexerSpec
   build-depends:       base
                      , ghc
                      , hi-haddock-lexer
