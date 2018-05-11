@@ -14,8 +14,9 @@ main = hspec spec
 
 spec :: Spec
 spec = do
+{-
   describe "plausibleIdentifier" $ do
-    let pI = P.runParser (HaddockLexer.plausibleIdentifier <* P.eof) () "plausibleIdentifier"
+    let pI = P.runParser (HaddockLexer.plausibleIdentifier) () "plausibleIdentifier"
 
     it "accepts variable names" $ do
       pI "foo" `shouldParseTo` "foo"
@@ -33,12 +34,27 @@ spec = do
       shouldNotParse $ pI ""
     it "accepts identifiers starting with an underscore" $ do
       pI "_foo" `shouldParseTo` "_foo"
+-}
   describe "delimitedPlausibleIdentifier" $ do
-    let dPI = P.runParser (HaddockLexer.delimitedPlausibleIdentifier <* P.eof) () "delimitedPlausibleIdentifier"
+    let dPI = P.runParser (HaddockLexer.delimitedPlausibleIdentifier) () "delimitedPlausibleIdentifier"
     it "accepts variable names in backticks" $ do
       dPI "`foo`" `shouldParseTo` "foo"
     it "accepts variable names in single quotes" $ do
       dPI "'foo'" `shouldParseTo` "foo"
+    it "accepts variable names preceded by a backtick and followed by a single quote" $ do
+      dPI "`foo'" `shouldParseTo` "foo"
+    it "accepts variable names containing a single quote" $ do
+      dPI "`don't`" `shouldParseTo` "don't"
+      dPI "'don't'" `shouldParseTo` "don't"
+    it "accepts variable names ending with a single quote" $ do
+      dPI "`foo'`" `shouldParseTo` "foo'"
+      dPI "'foo''" `shouldParseTo` "foo'"
+    it "accepts variable names ending with multiple single quotes" $ do
+      dPI "'foo''''" `shouldParseTo` "foo'''"
+    it "rejects strings containing whitespace" $ do
+      shouldNotParse $ dPI "'foo '"
+    it "accepts the longest plausible identifier before an invalid part" $ do
+      dPI "'foo'o'o '" `shouldParseTo` "foo'o"
   describe "lex" $ do
     context "ignoring source spans" $ do
       it "detects no identifiers in the empty string" $ do
