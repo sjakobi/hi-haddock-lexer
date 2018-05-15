@@ -64,6 +64,10 @@ spec = do
       iWdPI "`foo`" `shouldParseTo` ["foo"]
     it "accepts a single identifier preceded by some text" $ do
       iWdPI "bla `foo`" `shouldParseTo` ["foo"]
+    it "accepts a single identifier enclosed within some other text" $ do
+      iWdPI "a`foo`b" `shouldParseTo` ["foo"]
+    it "accepts a single identifier preceded by several delimiters" $ do
+      iWdPI "'`'`foo`" `shouldParseTo` ["foo"]
   describe "lex" $ do
     context "ignoring source spans" $ do
       it "detects no identifiers in the empty string" $ do

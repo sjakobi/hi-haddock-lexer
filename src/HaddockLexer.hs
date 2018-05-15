@@ -41,7 +41,7 @@ lex s = HsDoc s []
 
 identifiersWith :: Stream s m Char => ParsecT s u m a -> ParsecT s u m [a]
 identifiersWith identifier =
-    catMaybes <$> P.many ((Just <$> identifier) <|> dropDelim <|> dropUntilDelim)
+    catMaybes <$> P.many (P.try (Just <$> identifier) <|> dropDelim <|> dropUntilDelim)
   where
     dropUntilDelim = P.many1 (P.satisfy (not . isDelim)) $> Nothing
     dropDelim = identDelim $> Nothing
@@ -71,7 +71,7 @@ isDelim :: Char -> Bool
 isDelim c = c == '\'' || c == '`'
 
 isFirstIdentChar :: Char -> Bool
-isFirstIdentChar c = isAlpha c || c == '_' || isSymbol c
+isFirstIdentChar c = (isAlpha c || c == '_' || isSymbol c) && c /= '`'
 
 isIdentChar :: Char -> Bool
 isIdentChar c = not (isSpace c) && c /= '`'
