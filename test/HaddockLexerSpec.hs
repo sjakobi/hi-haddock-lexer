@@ -55,6 +55,15 @@ spec = do
       shouldNotParse $ dPI "'foo '"
     it "accepts the longest plausible identifier before an invalid part" $ do
       dPI "'foo'o'o '" `shouldParseTo` "foo'o"
+  describe "identifiersWith delimitedPlausibleIdentifier" $ do
+    let iWdPI = P.runParser
+                 (HaddockLexer.identifiersWith HaddockLexer.delimitedPlausibleIdentifier)
+                 ()
+                 "identifiersWith delimitedPlausibleIdentifier"
+    it "accepts a single identifier in backticks" $ do
+      iWdPI "`foo`" `shouldParseTo` ["foo"]
+    it "accepts a single identifier preceded by some text" $ do
+      iWdPI "bla `foo`" `shouldParseTo` ["foo"]
   describe "lex" $ do
     context "ignoring source spans" $ do
       it "detects no identifiers in the empty string" $ do

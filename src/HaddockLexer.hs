@@ -3,6 +3,8 @@ module HaddockLexer where
 
 import Control.Applicative
 import Data.Char
+import Data.Functor
+import Data.Maybe
 import Text.Parsec (Stream, ParsecT)
 import qualified Text.Parsec as P
 
@@ -10,7 +12,6 @@ import FastString (mkFastString)
 import Lexer (mkPStatePure, unP, ParseResult(POk), ParserFlags(..))
 import Parser (parseIdentifier)
 import RdrName
-import OccName
 import SrcLoc (mkRealSrcLoc, unLoc)
 import StringBuffer (stringToStringBuffer)
 import qualified EnumSet
@@ -38,6 +39,13 @@ data HsDoc name =
 lex :: String -> HsDoc RdrName
 lex s = HsDoc s []
 
+identifiersWith :: Stream s m Char => ParsecT s u m a -> ParsecT s u m [a]
+identifiersWith identifier =
+    catMaybes <$> P.many ((Just <$> identifier) <|> dropDelim <|> dropUntilDelim)
+  where
+    dropUntilDelim = P.many1 (P.satisfy (not . isDelim)) $> Nothing
+    dropDelim = identDelim $> Nothing
+
 -- Ignores infix identifiers for now
 delimitedPlausibleIdentifier :: Stream s m Char => ParsecT s u m String
 delimitedPlausibleIdentifier = identDelim *> plausibleIdentifier <* identDelim
@@ -57,7 +65,10 @@ plausibleIdentifier = do
         _ -> fail "outofvalid"
 
 identDelim :: Stream s m Char => ParsecT s u m Char
-identDelim = P.satisfy (\c -> c == '\'' || c == '`')
+identDelim = P.satisfy isDelim
+
+isDelim :: Char -> Bool
+isDelim c = c == '\'' || c == '`'
 
 isFirstIdentChar :: Char -> Bool
 isFirstIdentChar c = isAlpha c || c == '_' || isSymbol c
