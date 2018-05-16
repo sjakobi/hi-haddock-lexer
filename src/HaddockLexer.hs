@@ -56,7 +56,7 @@ identifiersWith identifier =
     handleNewline = do
       p0 <- P.getPosition
       _ <- P.char '\n'
-      P.setPosition (P.setSourceColumn p0 (P.sourceColumn p0 + 1))
+      P.setPosition (P.incSourceColumn p0 1)
       return Nothing
     dropUntilDelim = P.skipMany1 (P.satisfy (\c -> not (isDelim c) && c /= '\n')) $> Nothing
     dropDelim = identDelim $> Nothing
