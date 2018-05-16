@@ -46,25 +46,24 @@ lex s = HsDoc (mkHsDocString s) (mapMaybe maybeDocIdentifier idxdPlausIds)
     idxdPlausIds =
       either (error . show)
              id
-             (P.runParser (identifiersWith delimitedPlausibleIdentifierWithIndices)
+             (P.runParser (identifiersWith (delimited plausibleIdentifierWithIndices))
                           () "" s)
 
 identifiersWith :: Stream s m Char => ParsecT s u m a -> ParsecT s u m [a]
 identifiersWith identifier =
     catMaybes <$> P.many (P.try (Just <$> identifier) <|> dropDelim <|> dropUntilDelim)
   where
-    dropUntilDelim = P.many1 (P.satisfy (not . isDelim)) $> Nothing
+    dropUntilDelim = P.skipMany1 (P.satisfy (not . isDelim)) $> Nothing
     dropDelim = identDelim $> Nothing
 
-delimitedPlausibleIdentifier :: Stream s m Char => ParsecT s u m String
-delimitedPlausibleIdentifier = identDelim *> plausibleIdentifier <* identDelim
-
-delimitedPlausibleIdentifierWithIndices :: Stream s m Char => ParsecT s u m (Int, String, Int)
-delimitedPlausibleIdentifierWithIndices = identDelim *> p <* identDelim
+plausibleIdentifierWithIndices :: Stream s m Char => ParsecT s u m (Int, String, Int)
+plausibleIdentifierWithIndices = liftA3 (,,) getColPos plausibleIdentifier getColPos
   where
-    p = liftA3 (,,) getColPos plausibleIdentifier getColPos
     -- not quite sure why I have to subtract 1 here
     getColPos = (pred . P.sourceColumn) <$> P.getPosition
+
+delimited :: Stream s m Char => ParsecT s u m a -> ParsecT s u m a
+delimited = P.between identDelim identDelim
 
 plausibleIdentifier :: Stream s m Char => ParsecT s u m String
 plausibleIdentifier = do
