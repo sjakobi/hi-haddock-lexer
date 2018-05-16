@@ -51,12 +51,16 @@ lex s = HsDoc (mkHsDocString s) (mapMaybe maybeDocIdentifier idxdPlausIds)
 
 identifiersWith :: Stream s m Char => ParsecT s u m a -> ParsecT s u m [a]
 identifiersWith identifier =
-    catMaybes <$> P.many (P.try (Just <$> identifier) <|> dropDelim <|> dropUntilDelim)
+    catMaybes <$> P.many (P.try (Just <$> identifier) <|> handleNewline <|> dropDelim <|> dropUntilDelim)
   where
-    dropUntilDelim = P.skipMany1 (P.satisfy (not . isDelim)) $> Nothing
+    handleNewline = do
+      p0 <- P.getPosition
+      _ <- P.char '\n'
+      P.setPosition (P.setSourceColumn p0 (P.sourceColumn p0 + 1))
+      return Nothing
+    dropUntilDelim = P.skipMany1 (P.satisfy (\c -> not (isDelim c) && c /= '\n')) $> Nothing
     dropDelim = identDelim $> Nothing
 
--- | Indices will be wrong for multiline line inputs
 plausibleIdentifierWithIndices :: Stream s m Char => ParsecT s u m (Int, String, Int)
 plausibleIdentifierWithIndices = liftA3 (,,) getColPos plausibleIdentifier getColPos
   where

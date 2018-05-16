@@ -65,7 +65,7 @@ spec = do
       iWdPI "`foo`, 'bar', and `baz'" `shouldParseTo` ["foo", "bar", "baz"]
     it "ignores single ticks when they don't delimit an identifier" $ do
       iWdPI "don't 'foo'" `shouldParseTo` ["foo"]
-  describe "identifiersWith delimited plausibleIdentifierWithIndices" $ do
+  describe "identifiersWith (delimited plausibleIdentifierWithIndices)" $ do
     let iWdPIWI :: String -> Either ParseError [(Int, String, Int)]
         iWdPIWI = P.runParser
                   (H.identifiersWith (H.delimited H.plausibleIdentifierWithIndices))
@@ -75,6 +75,11 @@ spec = do
       iWdPIWI "`foo`" `shouldParseTo` [(1, "foo", 4)]
     it "parses multiple identifiers from a string" $ do
       iWdPIWI "`foo`, 'bar', and `baz'" `shouldParseTo` [(1, "foo", 4), (8, "bar", 11), (19, "baz", 22)]
+    context "with multiline strings" $ do
+      it "reports the right indices for an identifier preceded by a newline" $ do
+        iWdPIWI "\n`foo`" `shouldParseTo` [(2, "foo", 5)]
+      it "reports the right indices for an identifier preceded by some text" $ do
+        iWdPIWI "bla\nblab`foo`" `shouldParseTo` [(9, "foo", 12)]
   describe "lex" $ do
     context "ignoring source spans" $ do
       it "detects no identifiers in the empty string" $ do
