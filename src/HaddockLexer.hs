@@ -65,6 +65,8 @@ plausibleIdentifierWithIndices :: Stream s m Char => ParsecT s u m (Int, String,
 plausibleIdentifierWithIndices = liftA3 (,,) getColPos plausibleIdentifier getColPos
   where
     -- not quite sure why I have to subtract 1 here
+    -- Alternatively, we could use P.setPosition to start
+    -- at 0.
     getColPos = (pred . P.sourceColumn) <$> P.getPosition
 
 delimited :: Stream s m Char => ParsecT s u m a -> ParsecT s u m a
