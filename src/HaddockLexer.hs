@@ -46,9 +46,15 @@ identifiersWith identifier =
     dropUntilDelim = P.many1 (P.satisfy (not . isDelim)) $> Nothing
     dropDelim = identDelim $> Nothing
 
--- Ignores infix identifiers for now
 delimitedPlausibleIdentifier :: Stream s m Char => ParsecT s u m String
 delimitedPlausibleIdentifier = identDelim *> plausibleIdentifier <* identDelim
+
+delimitedPlausibleIdentifierWithIndices :: Stream s m Char => ParsecT s u m (Int, String, Int)
+delimitedPlausibleIdentifierWithIndices = identDelim *> p <* identDelim
+  where
+    p = liftA3 (,,) getColPos plausibleIdentifier getColPos
+    -- not quite sure why I have to subtract 1 here
+    getColPos = (pred . P.sourceColumn) <$> P.getPosition
 
 plausibleIdentifier :: Stream s m Char => ParsecT s u m String
 plausibleIdentifier = do
