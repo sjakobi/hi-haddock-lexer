@@ -56,6 +56,7 @@ identifiersWith identifier =
     dropUntilDelim = P.skipMany1 (P.satisfy (not . isDelim)) $> Nothing
     dropDelim = identDelim $> Nothing
 
+-- | Indices will be wrong for multiline line inputs
 plausibleIdentifierWithIndices :: Stream s m Char => ParsecT s u m (Int, String, Int)
 plausibleIdentifierWithIndices = liftA3 (,,) getColPos plausibleIdentifier getColPos
   where
@@ -86,7 +87,7 @@ isDelim :: Char -> Bool
 isDelim c = c == '\'' || c == '`'
 
 isFirstIdentChar :: Char -> Bool
-isFirstIdentChar c = (isAlpha c || c == '_' || isSymbol c) && c /= '`'
+isFirstIdentChar c = (isAlpha c || c == '_' || isSymbol c) && not (isDelim c)
 
 isIdentChar :: Char -> Bool
 isIdentChar c = not (isSpace c) && c /= '`'
