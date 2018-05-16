@@ -68,6 +68,12 @@ spec = do
       iWdPI "a`foo`b" `shouldParseTo` ["foo"]
     it "accepts a single identifier preceded by several delimiters" $ do
       iWdPI "'`'`foo`" `shouldParseTo` ["foo"]
+    it "accepts an infix identifier" $ do
+      iWdPI "'`foo`'" `shouldParseTo` ["foo"]
+    it "parses multiple identifiers from a string" $ do
+      iWdPI "`foo`, 'bar', and `baz'" `shouldParseTo` ["foo", "bar", "baz"]
+    it "ignores single ticks when they don't delimit an identifier" $ do
+      iWdPI "don't 'foo'" `shouldParseTo` ["foo"]
   describe "lex" $ do
     context "ignoring source spans" $ do
       it "detects no identifiers in the empty string" $ do
