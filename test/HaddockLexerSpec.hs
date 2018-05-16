@@ -1,3 +1,4 @@
+{-# language StandaloneDeriving #-}
 module HaddockLexerSpec (main, spec) where
 
 import Data.Either
@@ -5,6 +6,11 @@ import Test.Hspec
 import Text.Parsec (ParseError)
 import qualified Text.Parsec as P
 
+import Module
+import Name
+import RdrName
+
+import HaddockLexer (HsDoc(..), DocIdentifier(..), DocIdentifierSpan(..))
 import qualified HaddockLexer
 
 -- `main` is here so that this module can be run from GHCi on its own.  It is
@@ -91,10 +97,18 @@ spec = do
         "bli bla blup" `shouldLexToIdStrings` []
       it "detects no identifiers in a string with single quotes but no identifiers" $ do
         "don't hasn't" `shouldLexToIdStrings` []
-{-
       it "detects an identifier" $ do
         "'foo'" `shouldLexToIdStrings` ["foo"]
--}
+    context "looking at the whole HsDoc" $ do
+      it "detects a variable identifier" $ do
+        HaddockLexer.lex "'foo'" `shouldBe`
+          HsDoc
+            "'foo'"
+            [DocIdentifier {docIdentifierSpan = DocIdentifierSpan 1 4
+                           , docIdentifierString = "foo"
+                           , docIdentifierNames = [Unqual (mkVarOcc "foo")]}]
+      it "ignores an invalid pretend-identifier" $ do
+        HaddockLexer.lex "'foo$'" `shouldBe` HsDoc "'foo$'" []
 
 shouldLexToIdStrings :: String -> [String] -> Expectation
 shouldLexToIdStrings s ids = HaddockLexer.docIdentifierString <$> ids' `shouldBe` ids
@@ -105,3 +119,12 @@ shouldParseTo res ex = res `shouldBe` Right ex
 
 shouldNotParse :: (Eq a, Show a) => Either ParseError a -> Expectation
 shouldNotParse res = res `shouldSatisfy` isLeft
+
+instance Show OccName where
+  show = show . occNameString
+instance Show ModuleName where
+  show = show . moduleNameString
+instance Show Name where
+  show = show . nameStableString
+deriving instance Show Module
+deriving instance Show RdrName

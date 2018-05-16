@@ -37,7 +37,16 @@ data HsDoc name =
   deriving (Eq, Show)
 
 lex :: String -> HsDoc RdrName
-lex s = HsDoc s []
+lex s = HsDoc s (mapMaybe maybeDocIdentifier idxdPlausIds)
+  where
+    maybeDocIdentifier :: (Int, String, Int) -> Maybe (DocIdentifier RdrName)
+    maybeDocIdentifier (ix0, pid, ix1) =
+      DocIdentifier (DocIdentifierSpan ix0 ix1) pid . (: []) <$> parseIdent pid
+    idxdPlausIds =
+      either (error . show)
+             id
+             (P.runParser (identifiersWith delimitedPlausibleIdentifierWithIndices)
+                          () "" s)
 
 identifiersWith :: Stream s m Char => ParsecT s u m a -> ParsecT s u m [a]
 identifiersWith identifier =
