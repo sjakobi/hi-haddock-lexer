@@ -1,11 +1,13 @@
-{-# language StandaloneDeriving #-}
+{-# language GeneralizedNewtypeDeriving, OverloadedStrings, StandaloneDeriving #-}
 module HaddockLexerSpec (main, spec) where
 
 import Data.Either
+import Data.String
 import Test.Hspec
 import Text.Parsec (ParseError)
 import qualified Text.Parsec as P
 
+import HsDoc
 import Module
 import Name
 import RdrName
@@ -42,7 +44,8 @@ spec = do
       pI "_foo" `shouldParseTo` "_foo"
 -}
   describe "delimitedPlausibleIdentifier" $ do
-    let dPI = P.runParser (HaddockLexer.delimitedPlausibleIdentifier) () "delimitedPlausibleIdentifier"
+    let dPI :: String -> Either ParseError String
+        dPI = P.runParser (HaddockLexer.delimitedPlausibleIdentifier) () "delimitedPlausibleIdentifier"
     it "accepts variable names in backticks" $ do
       dPI "`foo`" `shouldParseTo` "foo"
     it "accepts variable names in single quotes" $ do
@@ -62,7 +65,8 @@ spec = do
     it "accepts the longest plausible identifier before an invalid part" $ do
       dPI "'foo'o'o '" `shouldParseTo` "foo'o"
   describe "identifiersWith delimitedPlausibleIdentifier" $ do
-    let iWdPI = P.runParser
+    let iWdPI :: String -> Either ParseError [String]
+        iWdPI = P.runParser
                  (HaddockLexer.identifiersWith HaddockLexer.delimitedPlausibleIdentifier)
                  ()
                  "identifiersWith delimitedPlausibleIdentifier"
@@ -81,7 +85,8 @@ spec = do
     it "ignores single ticks when they don't delimit an identifier" $ do
       iWdPI "don't 'foo'" `shouldParseTo` ["foo"]
   describe "identifiersWith delimitedPlausibleIdentifierWithIndices" $ do
-    let iWdPIWI = P.runParser
+    let iWdPIWI :: String -> Either ParseError [(Int, String, Int)]
+        iWdPIWI = P.runParser
                   (HaddockLexer.identifiersWith HaddockLexer.delimitedPlausibleIdentifierWithIndices)
                   ()
                   "identifiersWith delimitedPlausibleIdentifier"
@@ -111,7 +116,7 @@ spec = do
         HaddockLexer.lex "'foo$'" `shouldBe` HsDoc "'foo$'" []
 
 shouldLexToIdStrings :: String -> [String] -> Expectation
-shouldLexToIdStrings s ids = HaddockLexer.docIdentifierString <$> ids' `shouldBe` ids
+shouldLexToIdStrings s ids = HaddockLexer.unpackHDS . HaddockLexer.docIdentifierString <$> ids' `shouldBe` ids
   where HaddockLexer.HsDoc _ ids' = HaddockLexer.lex s
 
 shouldParseTo :: (Eq a, Show a) => Either ParseError a -> a -> Expectation
@@ -128,3 +133,4 @@ instance Show Name where
   show = show . nameStableString
 deriving instance Show Module
 deriving instance Show RdrName
+deriving instance IsString HsDocString

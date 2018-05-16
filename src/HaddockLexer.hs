@@ -8,7 +8,8 @@ import Data.Maybe
 import Text.Parsec (Stream, ParsecT)
 import qualified Text.Parsec as P
 
-import FastString (mkFastString)
+import FastString
+import HsDoc
 import Lexer (mkPStatePure, unP, ParseResult(POk), ParserFlags(..))
 import Parser (parseIdentifier)
 import RdrName
@@ -26,22 +27,22 @@ data DocIdentifierSpan =
 data DocIdentifier name =
   DocIdentifier
   { docIdentifierSpan :: DocIdentifierSpan
-  , docIdentifierString ::  String
+  , docIdentifierString :: HsDocString
   , docIdentifierNames ::  [name]
   } deriving (Eq, Show)
 
 data HsDoc name =
   HsDoc
-    String
+    HsDocString
     [DocIdentifier name]
   deriving (Eq, Show)
 
 lex :: String -> HsDoc RdrName
-lex s = HsDoc s (mapMaybe maybeDocIdentifier idxdPlausIds)
+lex s = HsDoc (mkHsDocString s) (mapMaybe maybeDocIdentifier idxdPlausIds)
   where
     maybeDocIdentifier :: (Int, String, Int) -> Maybe (DocIdentifier RdrName)
     maybeDocIdentifier (ix0, pid, ix1) =
-      DocIdentifier (DocIdentifierSpan ix0 ix1) pid . (: []) <$> parseIdent pid
+      DocIdentifier (DocIdentifierSpan ix0 ix1) (mkHsDocString pid) . (: []) <$> parseIdent pid
     idxdPlausIds =
       either (error . show)
              id
@@ -110,3 +111,9 @@ validIdentifier = do
     Just id' -> return id'
     Nothing -> P.parserFail ("Not a valid identifier: " ++ pid)
 -}
+
+mkHsDocString :: String -> HsDocString
+mkHsDocString = HsDocString . mkFastString
+
+unpackHDS :: HsDocString -> String
+unpackHDS (HsDocString fs) = unpackFS fs
