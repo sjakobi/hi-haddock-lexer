@@ -22,27 +22,6 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-{-
-  describe "plausibleIdentifier" $ do
-    let pI = P.runParser (HaddockLexer.plausibleIdentifier) () "plausibleIdentifier"
-
-    it "accepts variable names" $ do
-      pI "foo" `shouldParseTo` "foo"
-    it "accepts operators" $ do
-      pI "<$>" `shouldParseTo` "<$>"
-    it "accepts variable names including single ticks" $ do
-      pI "don't'" `shouldParseTo` "don't'"
-    it "rejects whitespace" $ do
-      shouldNotParse $ pI " "
-    it "rejects whitespace after some valid letters" $ do
-      shouldNotParse $ pI "foo "
-    it "rejects pretend-identifiers starting with a digit" $ do
-      shouldNotParse $ pI "3foo"
-    it "rejects the empty string" $ do
-      shouldNotParse $ pI ""
-    it "accepts identifiers starting with an underscore" $ do
-      pI "_foo" `shouldParseTo` "_foo"
--}
   describe "delimitedPlausibleIdentifier" $ do
     let dPI :: String -> Either ParseError String
         dPI = P.runParser (HaddockLexer.delimitedPlausibleIdentifier) () "delimitedPlausibleIdentifier"
