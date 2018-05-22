@@ -93,7 +93,7 @@ isDelim :: Char -> Bool
 isDelim c = c == '\'' || c == '`'
 
 isFirstIdentChar :: Char -> Bool
-isFirstIdentChar c = (isAlpha c || c == '_' || isSymbol c) && not (isDelim c)
+isFirstIdentChar c = (isAlpha c || c == '_' || isSymbol c || c == ':') && not (isDelim c)
 
 isIdentChar :: Char -> Bool
 isIdentChar c = not (isSpace c) && c /= '`'

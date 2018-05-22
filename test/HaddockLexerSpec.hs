@@ -45,6 +45,10 @@ spec = do
       shouldNotParse $ dPI "'foo '"
     it "accepts the longest plausible identifier before an invalid part" $ do
       dPI "'foo'o'o '" `shouldParseTo` "foo'o"
+    it "accepts an operator" $ do
+      dPI "'<>'" `shouldParseTo` "<>"
+    it "accepts a constructor operator" $ do
+      dPI "':='" `shouldParseTo` ":="
   describe "identifiersWith delimitedPlausibleIdentifier" $ do
     let iWdPI :: String -> Either ParseError [String]
         iWdPI = P.runParser
