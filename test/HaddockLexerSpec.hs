@@ -49,6 +49,8 @@ spec = do
       dPI "'<>'" `shouldParseTo` "<>"
     it "accepts a constructor operator" $ do
       dPI "':='" `shouldParseTo` ":="
+    it "rejects a mix of letters and operator symbols" $ do
+      shouldNotParse $ dPI "'f$'"
   describe "identifiersWith delimitedPlausibleIdentifier" $ do
     let iWdPI :: String -> Either ParseError [String]
         iWdPI = P.runParser

@@ -73,13 +73,25 @@ delimited :: Stream s m Char => ParsecT s u m a -> ParsecT s u m a
 delimited = P.between identDelim identDelim
 
 plausibleIdentifier :: Stream s m Char => ParsecT s u m String
-plausibleIdentifier = do
-    c <- P.satisfy isFirstIdentChar
+plausibleIdentifier = plausibleOperator <|> plausibleIdentifier'
+
+plausibleOperator :: Stream s m Char => ParsecT s u m String
+plausibleOperator = P.many1 (ascSymbol <|> uniSymbol)
+
+ascSymbol :: Stream s m Char => ParsecT s u m Char
+ascSymbol = P.oneOf "!#$%&⋆+./<=>?@\\^|-~:"
+
+uniSymbol :: Stream s m Char => ParsecT s u m Char
+uniSymbol = P.satisfy (\c -> not (isAscii c) && isSymbol c)
+
+plausibleIdentifier' :: Stream s m Char => ParsecT s u m String
+plausibleIdentifier' = do
+    c <- identStart
     cs <- p
     return (c : cs)
   where
     p = do
-      vs <- many (P.satisfy (\c -> isIdentChar c && c /= '\''))
+      vs <- many identLetterExcept'
       c <- P.lookAhead P.anyChar
       case c of
         '`' -> return vs
@@ -89,14 +101,20 @@ plausibleIdentifier = do
 identDelim :: Stream s m Char => ParsecT s u m Char
 identDelim = P.satisfy isDelim
 
+identStart :: Stream s m Char => ParsecT s u m Char
+identStart = P.letter <|> P.char '_'
+
+identLetterExcept' :: Stream s m Char => ParsecT s u m Char
+identLetterExcept' = P.alphaNum <|> P.char '_'
+
 isDelim :: Char -> Bool
 isDelim c = c == '\'' || c == '`'
 
 isFirstIdentChar :: Char -> Bool
-isFirstIdentChar c = (isAlpha c || c == '_' || isSymbol c || c == ':') && not (isDelim c)
+isFirstIdentChar c = isAlpha c || c == '_'
 
 isIdentChar :: Char -> Bool
-isIdentChar c = not (isSpace c) && c /= '`'
+isIdentChar c = isAlphaNum c || c == '_' || c == '\''
 
 -- adapted from haddock-api
 parseIdent :: String -> Maybe RdrName
